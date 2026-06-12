@@ -106,11 +106,19 @@ reporting. Empty values are omitted from the request.
 ## Development
 
 ```bash
-composer install      # install dev tooling (PHPCS, WPCS, PHPUnit)
+composer install      # install PHP dev tooling (PHPCS, WPCS, PHPUnit)
 composer lint         # run phpcs
 composer lint:fix     # run phpcbf
 composer test         # run phpunit
+
+npm install           # install JS dev tooling (ESLint)
+npm run lint:js       # lint assets/js
 ```
+
+CI runs on every push and pull request
+([`.github/workflows/ci.yml`](.github/workflows/ci.yml)): it validates `composer.json`,
+syntax-checks PHP across an 8.0–8.3 matrix, lints `assets/js` with ESLint on Node 22, and
+runs PHPCS / PHPUnit once their config is added.
 
 ### Releasing
 
