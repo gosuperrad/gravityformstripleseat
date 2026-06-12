@@ -1,0 +1,41 @@
+{
+	"name": "superrad/gravityformstripleseat",
+	"description": "Integrates Gravity Forms with Tripleseat, sending form submissions to the Tripleseat Lead API. Supports per-form feeds, field mapping, and UTM/GCLID campaign tracking.",
+	"keywords": [
+		"wordpress",
+		"plugin",
+		"gravity forms",
+		"tripleseat",
+		"leads",
+		"crm"
+	],
+	"type": "wordpress-plugin",
+	"license": "GPL-2.0-or-later",
+	"authors": [
+		{
+			"name": "Super Rad",
+			"homepage": "https://superrad.dev"
+		}
+	],
+	"require": {
+		"php": ">=8.0",
+		"composer/installers": "^1.0 || ^2.0"
+	},
+	"require-dev": {
+		"squizlabs/php_codesniffer": "^3.9",
+		"wp-coding-standards/wpcs": "^3.1",
+		"dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+		"phpunit/phpunit": "^9.6 || ^10.5 || ^11.0"
+	},
+	"config": {
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true,
+			"composer/installers": true
+		}
+	},
+	"scripts": {
+		"lint": "phpcs",
+		"lint:fix": "phpcbf",
+		"test": "phpunit"
+	}
+}

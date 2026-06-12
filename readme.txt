@@ -35,6 +35,27 @@ Features:
 
 == Installation ==
 
+= Via Composer =
+
+This plugin is distributed through its GitHub repository rather than Packagist. Add the
+VCS repository to your project's `composer.json`:
+
+    "repositories": [
+        { "type": "vcs", "url": "https://github.com/gosuperrad/gravityformstripleseat" }
+    ]
+
+Then require it:
+
+    composer require superrad/gravityformstripleseat:^1.0
+
+`composer/installers` places the plugin in the correct directory automatically — on
+Bedrock installs that is `web/app/plugins/gravityformstripleseat/`, otherwise
+`wp-content/plugins/gravityformstripleseat/`. To track the main development branch
+instead of stable releases, require `dev-main` rather than `^1.0`. The repository is
+public, so no authentication is required.
+
+= Manual =
+
 1. Install and activate Gravity Forms (2.4+).
 2. Install and activate this add-on.
 3. Go to Forms → Settings → Tripleseat and enter your Tripleseat **public key** (found
