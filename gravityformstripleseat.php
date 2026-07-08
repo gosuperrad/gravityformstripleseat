@@ -4,7 +4,7 @@
 Plugin Name: Gravity Forms Tripleseat Add-On
 Plugin URI: https://github.com/mondaynightbrewing/gravityformstripleseat
 Description: Integrates Gravity Forms with Tripleseat, sending form submissions to the Tripleseat Lead API. Supports per-form feeds, field mapping, and UTM/GCLID campaign tracking.
-Version: 1.0.0
+Version: 1.1.0
 Author: Super Rad
 Author URI: https://gosuperrad.com/
 Text Domain: gravityformstripleseat
@@ -16,7 +16,7 @@ if (! defined('ABSPATH')) {
     exit;
 }
 
-define('GF_TRIPLESEAT_VERSION', '1.0.0');
+define('GF_TRIPLESEAT_VERSION', '1.1.0');
 define('GF_TRIPLESEAT_URL', plugin_dir_url(__FILE__));
 
 add_action('gform_loaded', ['GF_Tripleseat_Bootstrap', 'load'], 5);

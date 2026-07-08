@@ -4,7 +4,7 @@ Tags: gravity forms, tripleseat, leads, crm, utm
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.0.0
+Stable tag: 1.1.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -87,6 +87,12 @@ On submission the campaign values appear on the Tripleseat Lead Details page and
 reporting. Empty values are omitted from the request.
 
 == Changelog ==
+
+= 1.1.0 =
+* Detect Tripleseat lead rejections. The Lead API returns HTTP 200 even when it
+  rejects a lead (reporting the reason in the response body, e.g. a required field
+  left blank). The add-on now parses the body and records a feed error on the entry
+  and in the log instead of treating the rejection as a success.
 
 = 1.0.0 =
 * Initial release.

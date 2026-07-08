@@ -115,9 +115,41 @@ class GF_Tripleseat extends GFFeedAddOn
 
         if ($code < 200 || $code >= 300) {
             $this->add_feed_error(sprintf(esc_html__('Tripleseat returned HTTP %s.', 'gravityformstripleseat'), $code), $feed, $entry, $form);
+
+            return $entry;
+        }
+
+        // Tripleseat's Lead API answers HTTP 200 even when it rejects the lead, reporting the
+        // reason in the body (e.g. {"errors":{"Event Date":["can't be blank"]}}). Without this
+        // check a rejected lead looks like a success: no entry note, nothing created in Tripleseat.
+        $parsed = json_decode($resp_body, true);
+
+        if (is_array($parsed) && ! empty($parsed['errors'])) {
+            $messages = $this->flatten_tripleseat_errors($parsed['errors']);
+            $this->add_feed_error(sprintf(esc_html__('Tripleseat rejected the lead: %s', 'gravityformstripleseat'), $messages), $feed, $entry, $form);
+            $this->log_error(__METHOD__ . '(): Tripleseat rejected the lead => ' . $messages);
         }
 
         return $entry;
+    }
+
+    /**
+     * Flatten Tripleseat's { field: [messages] } error object into a readable one-line string.
+     *
+     * @param array $errors The decoded "errors" payload from a Tripleseat response.
+     *
+     * @return string
+     */
+    private function flatten_tripleseat_errors($errors)
+    {
+        $parts = [];
+
+        foreach ((array) $errors as $field => $messages) {
+            $messages = is_array($messages) ? implode(', ', $messages) : (string) $messages;
+            $parts[]  = (is_string($field) && $field !== '') ? "{$field}: {$messages}" : $messages;
+        }
+
+        return implode('; ', $parts);
     }
 
     /**
