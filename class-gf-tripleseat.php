@@ -68,7 +68,7 @@ class GF_Tripleseat extends GFFeedAddOn
         $lead_form_id = trim((string) rgars($feed, 'meta/lead_form_id'));
 
         if ($public_key === '' || $lead_form_id === '') {
-            $this->add_feed_error(esc_html__('Tripleseat public key or lead form ID is missing; lead not sent.', 'gravityformstripleseat'), $feed, $entry, $form);
+            $this->fail_feed(esc_html__('Tripleseat public key or lead form ID is missing; lead not sent.', 'gravityformstripleseat'), $feed, $entry, $form);
 
             return $entry;
         }
@@ -79,7 +79,7 @@ class GF_Tripleseat extends GFFeedAddOn
         );
 
         if (empty($body['lead[email_address]'])) {
-            $this->add_feed_error(esc_html__('Email address is empty; Tripleseat lead not sent.', 'gravityformstripleseat'), $feed, $entry, $form);
+            $this->fail_feed(esc_html__('Email address is empty; Tripleseat lead not sent.', 'gravityformstripleseat'), $feed, $entry, $form);
 
             return $entry;
         }
@@ -103,7 +103,7 @@ class GF_Tripleseat extends GFFeedAddOn
         );
 
         if (is_wp_error($response)) {
-            $this->add_feed_error(sprintf(esc_html__('Tripleseat request failed: %s', 'gravityformstripleseat'), $response->get_error_message()), $feed, $entry, $form);
+            $this->fail_feed(sprintf(esc_html__('Tripleseat request failed: %s', 'gravityformstripleseat'), $response->get_error_message()), $feed, $entry, $form);
             $this->log_error(__METHOD__ . '(): Request failed => ' . $response->get_error_message());
 
             return $entry;
@@ -114,7 +114,7 @@ class GF_Tripleseat extends GFFeedAddOn
         $this->log_debug(__METHOD__ . "(): Tripleseat responded [{$code}] => " . print_r($resp_body, true));
 
         if ($code < 200 || $code >= 300) {
-            $this->add_feed_error(sprintf(esc_html__('Tripleseat returned HTTP %s.', 'gravityformstripleseat'), $code), $feed, $entry, $form);
+            $this->fail_feed(sprintf(esc_html__('Tripleseat returned HTTP %s.', 'gravityformstripleseat'), $code), $feed, $entry, $form);
 
             return $entry;
         }
@@ -126,11 +126,107 @@ class GF_Tripleseat extends GFFeedAddOn
 
         if (is_array($parsed) && ! empty($parsed['errors'])) {
             $messages = $this->flatten_tripleseat_errors($parsed['errors']);
-            $this->add_feed_error(sprintf(esc_html__('Tripleseat rejected the lead: %s', 'gravityformstripleseat'), $messages), $feed, $entry, $form);
+            $this->fail_feed(sprintf(esc_html__('Tripleseat rejected the lead: %s', 'gravityformstripleseat'), $messages), $feed, $entry, $form);
             $this->log_error(__METHOD__ . '(): Tripleseat rejected the lead => ' . $messages);
         }
 
         return $entry;
+    }
+
+    /**
+     * Record a feed error and notify the configured recipients that a lead was lost.
+     *
+     * Wraps add_feed_error() so every path that prevents a submission from reaching
+     * Tripleseat both marks the entry (as before) and actively alerts someone.
+     *
+     * @param string $message The failure reason shown on the entry and in the alert.
+     * @param array  $feed    The feed being processed.
+     * @param array  $entry   The entry being processed.
+     * @param array  $form    The form being processed.
+     *
+     * @return void
+     */
+    private function fail_feed($message, $feed, $entry, $form)
+    {
+        $this->add_feed_error($message, $feed, $entry, $form);
+        $this->send_failure_notification($message, $feed, $entry, $form);
+    }
+
+    /**
+     * Email the configured recipients when a submission fails to reach Tripleseat.
+     *
+     * No-op when there is no recipient (blank setting and no site admin email). A
+     * failed send is logged but never interrupts feed processing.
+     *
+     * @param string $reason The human-readable failure reason.
+     * @param array  $feed   The feed being processed.
+     * @param array  $entry  The entry being processed.
+     * @param array  $form   The form being processed.
+     *
+     * @return void
+     */
+    private function send_failure_notification($reason, $feed, $entry, $form)
+    {
+        $recipients = $this->get_notification_recipients();
+
+        if (empty($recipients)) {
+            return;
+        }
+
+        $form_title = (string) rgar($form, 'title');
+        $feed_name  = (string) rgars($feed, 'meta/feedName');
+        $entry_id   = (string) rgar($entry, 'id');
+        $entry_url  = admin_url(
+            sprintf('admin.php?page=gf_entries&view=entry&id=%d&lid=%d', (int) rgar($form, 'id'), (int) $entry_id),
+        );
+
+        $subject = sprintf(
+            /* translators: %s: form title. */
+            esc_html__('[%s] A Tripleseat lead was not submitted', 'gravityformstripleseat'),
+            $form_title,
+        );
+
+        $lines = [
+            esc_html__('A Gravity Forms submission failed to reach Tripleseat and may need manual follow-up.', 'gravityformstripleseat'),
+            '',
+            sprintf(esc_html__('Reason: %s', 'gravityformstripleseat'), $reason),
+            sprintf(esc_html__('Form: %s', 'gravityformstripleseat'), $form_title),
+            sprintf(esc_html__('Feed: %s', 'gravityformstripleseat'), $feed_name),
+            sprintf(esc_html__('Entry: #%s', 'gravityformstripleseat'), $entry_id),
+            '',
+            esc_html__('View the entry:', 'gravityformstripleseat'),
+            $entry_url,
+        ];
+
+        $sent = wp_mail($recipients, $subject, implode("\n", $lines));
+
+        if (! $sent) {
+            $this->log_error(__METHOD__ . '(): Failed to send Tripleseat failure notification for entry #' . $entry_id);
+        }
+    }
+
+    /**
+     * Resolve the failure-notification recipients from the add-on settings.
+     *
+     * Accepts a comma/semicolon/whitespace-separated list; falls back to the site
+     * admin email when blank. Invalid addresses are dropped.
+     *
+     * @return array
+     */
+    private function get_notification_recipients()
+    {
+        $configured = trim((string) $this->get_plugin_setting('notification_email'));
+
+        if ($configured === '') {
+            $admin = sanitize_email((string) get_option('admin_email'));
+
+            return is_email($admin) ? [$admin] : [];
+        }
+
+        $candidates = preg_split('/[,;\s]+/', $configured, -1, PREG_SPLIT_NO_EMPTY);
+        $recipients = array_filter(array_map('sanitize_email', $candidates), 'is_email');
+
+        return array_values(array_unique($recipients));
     }
 
     /**
@@ -229,6 +325,19 @@ class GF_Tripleseat extends GFFeedAddOn
                         'class'         => 'large',
                         'default_value' => self::DEFAULT_API_BASE,
                         'tooltip'       => '<h6>' . esc_html__('API Endpoint', 'gravityformstripleseat') . '</h6>' . esc_html__('Leave as the default unless Tripleseat instructs otherwise.', 'gravityformstripleseat'),
+                    ],
+                ],
+            ],
+            [
+                'title'       => esc_html__('Failure Notifications', 'gravityformstripleseat'),
+                'description' => esc_html__('Get emailed when a submission cannot be sent to Tripleseat — for example when Tripleseat rejects the lead, the request fails, or a required field is missing — so a lost lead can be followed up manually.', 'gravityformstripleseat'),
+                'fields'      => [
+                    [
+                        'name'    => 'notification_email',
+                        'label'   => esc_html__('Notification Email(s)', 'gravityformstripleseat'),
+                        'type'    => 'text',
+                        'class'   => 'large',
+                        'tooltip' => '<h6>' . esc_html__('Notification Email(s)', 'gravityformstripleseat') . '</h6>' . esc_html__('Where to send alerts about leads that failed to reach Tripleseat. Separate multiple addresses with commas. Leave blank to notify the site admin email.', 'gravityformstripleseat'),
                     ],
                 ],
             ],

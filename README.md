@@ -22,6 +22,10 @@ add-ons you already know: configure the account once, then add a feed per form.
   cookie, last-touch, 30 days) and feeds them into Tripleseat's `campaign_*` / `gclid`
   lead fields.
 - **Feed conditions & duplication** plus full debug logging via Gravity Forms.
+- **Failure notifications** — email a configurable recipient (defaulting to the site
+  admin) whenever a submission can't reach Tripleseat: a rejected lead, a failed
+  request, a non-2xx response, or missing configuration. Set it under Forms → Settings
+  → Tripleseat → Failure Notifications.
 - **Optional future-only dates** — add the `gf-future-date` CSS class to any Date field
   to block past dates (client + server side) using Gravity Forms' native datepicker
   filter. No CDN assets, no hardcoded field IDs.
