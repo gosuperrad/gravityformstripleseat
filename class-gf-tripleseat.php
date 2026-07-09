@@ -180,21 +180,25 @@ class GF_Tripleseat extends GFFeedAddOn
             sprintf('admin.php?page=gf_entries&view=entry&id=%d&lid=%d', (int) rgar($form, 'id'), (int) $entry_id),
         );
 
+        // The reason arrives HTML-escaped (it doubles as the admin feed-error note);
+        // decode it so entities like &#039; don't leak into the plain-text email.
+        $reason = wp_specialchars_decode($reason, ENT_QUOTES);
+
         $subject = sprintf(
             /* translators: %s: form title. */
-            esc_html__('[%s] A Tripleseat lead was not submitted', 'gravityformstripleseat'),
+            __('[%s] A Tripleseat lead was not submitted', 'gravityformstripleseat'),
             $form_title,
         );
 
         $lines = [
-            esc_html__('A Gravity Forms submission failed to reach Tripleseat and may need manual follow-up.', 'gravityformstripleseat'),
+            __('A Gravity Forms submission failed to reach Tripleseat and may need manual follow-up.', 'gravityformstripleseat'),
             '',
-            sprintf(esc_html__('Reason: %s', 'gravityformstripleseat'), $reason),
-            sprintf(esc_html__('Form: %s', 'gravityformstripleseat'), $form_title),
-            sprintf(esc_html__('Feed: %s', 'gravityformstripleseat'), $feed_name),
-            sprintf(esc_html__('Entry: #%s', 'gravityformstripleseat'), $entry_id),
+            sprintf(__('Reason: %s', 'gravityformstripleseat'), $reason),
+            sprintf(__('Form: %s', 'gravityformstripleseat'), $form_title),
+            sprintf(__('Feed: %s', 'gravityformstripleseat'), $feed_name),
+            sprintf(__('Entry: #%s', 'gravityformstripleseat'), $entry_id),
             '',
-            esc_html__('View the entry:', 'gravityformstripleseat'),
+            __('View the entry:', 'gravityformstripleseat'),
             $entry_url,
         ];
 
