@@ -4,7 +4,7 @@ Tags: gravity forms, tripleseat, leads, crm, utm
 Requires at least: 6.0
 Tested up to: 6.8
 Requires PHP: 8.0
-Stable tag: 1.1.0
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -29,6 +29,8 @@ Features:
   Tripleseat's campaign_source, campaign_medium, campaign_name, campaign_term,
   campaign_content and gclid lead fields.
 * Feed conditions, feed duplication, and full debug logging via Gravity Forms.
+* Email notifications when a submission can't be sent to Tripleseat (rejection,
+  request failure, or missing configuration), so a lost lead can be followed up.
 * Optional future-only date restriction: add the `gf-future-date` CSS class to any Date
   field to block past dates (client + server side), using Gravity Forms' native
   datepicker filter — no CDN assets or hardcoded field IDs.
@@ -87,6 +89,14 @@ On submission the campaign values appear on the Tripleseat Lead Details page and
 reporting. Empty values are omitted from the request.
 
 == Changelog ==
+
+= 1.2.0 =
+* Add failure notifications. When a submission can't be delivered to Tripleseat —
+  Tripleseat rejects the lead, the request fails, a non-2xx response comes back, or
+  the account/feed is misconfigured — the add-on now emails a configurable recipient
+  (defaulting to the site admin) with the reason and a link to the entry, in addition
+  to the existing feed error on the entry. Set the recipient under Forms → Settings →
+  Tripleseat → Failure Notifications.
 
 = 1.1.0 =
 * Detect Tripleseat lead rejections. The Lead API returns HTTP 200 even when it
