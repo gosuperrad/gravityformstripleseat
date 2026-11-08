@@ -8,8 +8,8 @@
 		"lint:js": "eslint assets/js"
 	},
 	"devDependencies": {
-		"@eslint/js": "^9.0.0",
-		"eslint": "^9.0.0",
+		"@eslint/js": "^9.39.5",
+		"eslint": "^9.39.5",
 		"globals": "^15.0.0"
 	}
 }
